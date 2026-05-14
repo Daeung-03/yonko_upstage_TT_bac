@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel
-from app.models.term import NotificationStatus
+from app.models.enums import NotificationStatus
 
 class NotificationResponse(BaseModel):
     id:           UUID

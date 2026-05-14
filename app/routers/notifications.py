@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func
 
 from app.database import get_db
 from app.models.calendar import Notification, NotificationStatus
@@ -12,6 +12,7 @@ router = APIRouter()
 
 @router.get("", response_model=NotificationListResponse)
 async def get_notifications(
+    # TODO: Replace user_id query param with authenticated principal when JWT auth is in place.
     user_id: UUID = Query(..., description="조회할 사용자 UUID"),
     status: NotificationStatus | None = Query(None, description="UNREAD / READ 필터"),
     db: AsyncSession = Depends(get_db),
@@ -21,7 +22,7 @@ async def get_notifications(
         .where(Notification.user_id == user_id)
         .order_by(
             # UNREAD 먼저, 그 다음 최신순
-            Notification.status.asc(),   # UNREAD < READ (알파벳 순)
+            Notification.status.desc(),  # 문자열 정렬 기준으로 UNREAD가 READ보다 뒤이므로 DESC로 UNREAD 우선
             Notification.created_at.desc(),
         )
     )
@@ -46,6 +47,7 @@ async def get_notifications(
 @router.patch("/{notification_id}/read", response_model=NotificationResponse)
 async def mark_as_read(
     notification_id: UUID,
+    # TODO: Replace user_id query param with authenticated principal when JWT auth is in place.
     user_id: UUID = Query(..., description="요청 사용자 UUID"),
     db: AsyncSession = Depends(get_db),
 ):
