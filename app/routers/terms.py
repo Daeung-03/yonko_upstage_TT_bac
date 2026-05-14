@@ -64,7 +64,10 @@ async def list_terms(
             domain=t.domain,
             status=t.status,
             subscribed_at=t.subscribed_at,
-            latest_version=1,  # TODO: 실제 최신 버전 쿼리
+            latest_version=(
+                next((v.version for v in t.versions if v.is_latest), None)
+                or max((v.version for v in t.versions), default=0)
+            ),
             created_at=t.created_at,
         )
         for t in terms
@@ -119,6 +122,10 @@ async def update_term(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
+    term = await term_service.get_term_detail(db, term_id, TEMP_USER_ID)
+    if not term:
+        raise HTTPException(status_code=404, detail="약관을 찾을 수 없습니다.")
+
     file_bytes = await file.read()
     file_url = f"/files/{file.filename}"
 

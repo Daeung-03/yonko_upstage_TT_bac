@@ -96,7 +96,11 @@ async def get_terms(
     domain: Optional[str] = None,
     status: Optional[str] = None,
 ):
-    q = select(Term).where(Term.user_id == user_id)
+    q = (
+        select(Term)
+        .options(selectinload(Term.versions))
+        .where(Term.user_id == user_id)
+    )
     if domain:
         q = q.where(Term.domain == domain)
     if status:
