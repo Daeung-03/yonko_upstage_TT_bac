@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, date
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy import String, Text, Integer, Boolean, Date, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -15,8 +16,14 @@ class Term(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     service_name: Mapped[str] = mapped_column(String, nullable=False)
-    domain: Mapped[TermDomain] = mapped_column(nullable=False)
-    status: Mapped[TermStatus] = mapped_column(default=TermStatus.ACTIVE)
+    domain: Mapped[TermDomain] = mapped_column(
+        SAEnum(TermDomain, name="term_domain", create_type=False),
+        nullable=False
+    )
+    status: Mapped[TermStatus] = mapped_column(
+        SAEnum(TermStatus, name="term_status", create_type=False),
+        default=TermStatus.ACTIVE
+    )
     file_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     subscribed_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -69,7 +76,10 @@ class TermClause(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("term_versions.id", ondelete="CASCADE"), nullable=False)
-    clause_type: Mapped[ClauseType] = mapped_column(nullable=False)
+    clause_type: Mapped[ClauseType] = mapped_column(
+        SAEnum(ClauseType, name="clause_type", create_type=False),
+        nullable=False
+    )
     title: Mapped[str | None] = mapped_column(Text, nullable=True)
     original_text: Mapped[str] = mapped_column(Text, nullable=False)
     plain_text: Mapped[str | None] = mapped_column(Text, nullable=True)
