@@ -1,9 +1,11 @@
 import uuid
+import enum
 from datetime import datetime, date
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import String, Text, Integer, Boolean, Date, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import TIMESTAMP as TIMESTAMPTZ
 from sqlalchemy import Column
 from pgvector.sqlalchemy import HALFVEC
 from app.database import Base
@@ -86,3 +88,8 @@ class TermClause(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     version: Mapped["TermVersion"] = relationship("TermVersion", back_populates="clauses")
+
+
+class NotificationStatus(str, enum.Enum):
+    UNREAD = "UNREAD"
+    READ = "READ"

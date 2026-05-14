@@ -84,7 +84,7 @@ async def process_upload(
             label=f"{service_name} - {d['event_type']}",
         ))
 
-    await db.commit()
+    await db.flush()
     await db.refresh(term)
     await db.refresh(version)
     return term, version
@@ -187,6 +187,6 @@ async def process_version_update(
             label=f"업데이트 v{last_version + 1} - {d['event_type']}",
         ))
 
-    await db.commit()
+    await db.flush()
     await db.refresh(new_version)
     return new_version

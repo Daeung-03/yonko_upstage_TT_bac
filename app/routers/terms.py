@@ -1,5 +1,6 @@
 # app/routers/terms.py
 import uuid
+from app.models.calendar import Notification
 from datetime import date 
 from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
@@ -40,6 +41,10 @@ async def upload_term(
         file_bytes=file_bytes,
         file_url=file_url,
     )
+
+    await db.commit()        # ← 추가
+    await db.refresh(version)  # ← 추가
+
     return TermUploadResponse(
         id=term.id,
         service_name=term.service_name,
@@ -136,6 +141,27 @@ async def update_term(
         file_bytes=file_bytes,
         file_url=file_url,
     )
+
+    new_version = await term_service.process_version_update(
+        db=db,
+        term_id=term_id,
+        user_id=TEMP_USER_ID,
+        file_bytes=file_bytes,
+        file_url=file_url,
+    )
+
+    new_notification = Notification(
+        user_id=term.user_id,
+        term_id=term.id,
+        version_id=new_version.id,
+        title=f"[{term.service_name}] 약관이 업데이트됐어요",
+        diff_summary=new_version.diff_summary,
+        status="UNREAD",
+    )
+    db.add(new_notification)
+    await db.commit() # ← 여기서 version + notification 한 번에 커밋
+    await db.refresh(new_version)
+
     return TermUpdateResponse(
         term_id=term_id,
         new_version=new_version.version,
