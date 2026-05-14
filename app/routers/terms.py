@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.calendar import Notification, NotificationStatus
 from app.schemas.term import (
     TermUploadResponse, TermListResponse, TermSummary,
     TermDetailResponse, TermVersionDetail, ClauseDetail,  # 추가
@@ -40,6 +41,10 @@ async def upload_term(
         file_bytes=file_bytes,
         file_url=file_url,
     )
+
+    await db.commit()        # ← 추가
+    await db.refresh(version)  # ← 추가
+
     return TermUploadResponse(
         id=term.id,
         service_name=term.service_name,
@@ -136,6 +141,19 @@ async def update_term(
         file_bytes=file_bytes,
         file_url=file_url,
     )
+
+    new_notification = Notification(
+        user_id=term.user_id,
+        term_id=term.id,
+        version_id=new_version.id,
+        title=f"[{term.service_name}] 약관이 업데이트됐어요",
+        diff_summary=new_version.diff_summary,
+        status=NotificationStatus.UNREAD,
+    )
+    db.add(new_notification)
+    await db.commit() # ← 여기서 version + notification 한 번에 커밋
+    await db.refresh(new_version)
+
     return TermUpdateResponse(
         term_id=term_id,
         new_version=new_version.version,

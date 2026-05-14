@@ -86,3 +86,4 @@ class TermClause(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     version: Mapped["TermVersion"] = relationship("TermVersion", back_populates="clauses")
+
